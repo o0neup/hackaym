@@ -13,6 +13,8 @@ from src.core import session
 from src.model.models import User
 from src.model.service import ModelService
 
+from settings import APP_NAME
+
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +76,12 @@ class MoneyService(object):
         else:
             return self.BALANCE_ENOUGH
 
-    def issue_payment(self, to, amount, comment=None):
+    def issue_payment(self, to, amount, comment=None, label=APP_NAME):
         """ Issues payment of specified amount money from wallet holder to given user (to_id)
-        :param to_id:
+        :param to:
         :param amount:
+        :param comment:
+        :param label:
         :return:
         """
         # todo make default comment?
@@ -93,7 +97,7 @@ class MoneyService(object):
             "amount_due": amount,
             "comment": comment or "",
             "message": comment or "",
-            "label": "LE BILL"  # TODO change!!1111 tags(labels) are really fucking important
+            "label": label
         })
         try:
             request = self.wallet.request_payment(options=requests_opts)

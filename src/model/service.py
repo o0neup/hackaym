@@ -1,4 +1,5 @@
-__author__ = 'ffuuugor'
+# coding: utf-8
+
 from models import User, Transaction, Chat, as_dict
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
@@ -7,6 +8,9 @@ import datetime
 from sqlalchemy import or_
 from collections import defaultdict
 from sqlalchemy.orm.exc import NoResultFound
+
+
+__author__ = 'ffuuugor'
 
 logger = logging.getLogger(__name__)
 
