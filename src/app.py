@@ -24,6 +24,3 @@ def handle():
     app.logger.info(request.json)
     print request.json
     return "Ok"
-
-if __name__ == "__main__":
-    app.run()
