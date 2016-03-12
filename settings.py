@@ -24,7 +24,7 @@ TELEGRAM = {
 }
 
 
-YM_SCOPE = ["account-info", "operation-details", "payment-p2p", "payment-shop"]
+YM_SCOPE = ["account-info", "operation-details", "payment-p2p"]
 
 
 try:
