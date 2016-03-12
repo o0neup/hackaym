@@ -9,14 +9,14 @@ import logging
 import requests
 
 from flask import Flask, request
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+
+from src.handlers.ymauth import auth
 
 
-engine = create_engine("postgres://localhost:5432/")
-session = sessionmaker(bind=engine)()
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.register_blueprint(auth)
 app.config.from_object('settings')
 
 app.logger.setLevel(logging.INFO)
@@ -25,6 +25,7 @@ r = requests.get(app.config["TELEGRAM"]["api_uri"].format(app.config["TELEGRAM"]
 print r.status_code
 
 mem_storage = {}
+
 
 @app.route('/aaa', methods=["POST"])
 def handle():
@@ -52,4 +53,4 @@ def handle_group_message(message):
                       data={"chat_id": message["chat"]["id"], "text": u"Привет, @{}".format(message["from"]["username"]), "reply_to_message_id": message[
                           "message_id"], "reply_markup": '{"force_reply": true, "selective": true}'}
                       )
-    return
+        return r.json()
