@@ -42,7 +42,6 @@ command_dict = {
         }
     ]
 }
-# fallback message
 
 
 @bot.message_handler(commands=['start', 'help'])
@@ -56,19 +55,20 @@ def send_welcome(message):
 def handle_bill(message):
     logger.info(message)
     write_to_storage(message.from_user.id, message.chat.id, message.text)
-    bot.send_message(message.chat.id, command_dict[
-                     message.text.strip('/')][0]["text"], reply_markup=types.ForceReply())
+    bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
+                     message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
 
 
 @bot.message_handler(func=lambda message: True)
 def save_user(message):
     logger.info(message)
+    username = message.from_user.username
     logger.info("User id: '{}', username: '{}'".format(
-        message.from_user.id, message.from_user.username))
+        message.from_user.id, username))
     key = storage_key(message.from_user.id, message.chat.id)
     if key in storage:
         messages = storage[key]
-        command = messages[0].strip('/')
+        command = messages[0].strip('/').split('@')[0]
 
         question = command_dict[command][len(messages) - 1]
         next_question = None
@@ -83,9 +83,12 @@ def save_user(message):
             write_to_storage(message.from_user.id,
                              message.chat.id, text)
             if next_question is not None:
-                bot.send_message(message.chat.id, next_question["text"])
+                bot.send_message(message.chat.id, "@{}, {}".format(username, next_question[
+                                 "text"]), reply_markup=types.ForceReply(selective=True))
             else:
                 logger.info("Question sequence is over")
+                bot.send_message(message.chat.id, "@{}, question sequence is over, answers are: {}".format(
+                    username, messages[1:]))
 
         if "parser" in question:
             if question["parser"](message.text) is not None:
@@ -93,11 +96,14 @@ def save_user(message):
                 logger.info("Parsed message: '{}'".format(parsed_message))
                 save_and_send_next(parsed_message)
             else:
-                bot.send_message(message.chat.id, question["fallback_message"])
-                bot.send_message(message.chat.id, question[
-                                 "text"], reply_markup=types.ForceReply())
+                bot.send_message(message.chat.id, "@{}, {}".format(
+                    username, question["fallback_message"]))
+                bot.send_message(message.chat.id, "@{}, {}".format(username, question[
+                                 "text"]), reply_markup=types.ForceReply(selective=True))
         else:
             save_and_send_next(message.text)
+
+
 storage = {}
 
 
