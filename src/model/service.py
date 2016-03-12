@@ -55,7 +55,7 @@ class ModelService(object):
         self._ensure_user(from_uid)
         self._ensure_user(to_uid)
         self._ensure_chat(chat_id)
-        
+
         if date is None:
             date = datetime.datetime.now()
 
