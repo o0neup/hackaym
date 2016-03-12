@@ -5,6 +5,7 @@ from sqlalchemy import *
 import logging
 import datetime
 from sqlalchemy import or_
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class ModelService(object):
         self.session.add(chat)
         self.session.commit()
 
-    def add_transaction(self, from_uid, to_uid, chat_id, amount, date=None, description=None):
+    def create_transaction(self, from_uid, to_uid, chat_id, amount, date=None, description=None):
         if date is None:
             date = datetime.datetime.now()
 
@@ -59,6 +60,33 @@ class ModelService(object):
         result = query.limit(limit).all()
         return [as_dict(x, columns=["name", "description", "date", "from_acc_id", "to_acc_id"]) for x in result]
 
+    def total_balance(self, uid=None, chat_id=None):
+        if uid is None and chat_id is None:
+            raise ValueError("At least one of the following should not be null: uid, chat_id")
+
+        query = self.session.query(Transaction)
+
+        if uid is not None:
+            query = query.filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid))
+
+        if chat_id is not None:
+            query = query.filter(Transaction.chat_id == chat_id)
+
+        accountable_transactions = query.all()
+        if uid is None:
+            users = set([x.from_acc_id for x in accountable_transactions])\
+                    | set([x.to_acc_id for x in accountable_transactions])
+        else:
+            users = {uid}
+
+        balances = defaultdict(int)
+        for transaction in accountable_transactions:
+            balances[transaction.from_acc_id] -= transaction.amount
+            balances[transaction.to_acc_id] += transaction.amount
+
+        return {key: val for key, val in balances.iteritems() if key in users }
+
+
 if __name__ == '__main__':
     engine = create_engine("postgres://localhost:5432/")
     Session = sessionmaker(bind=engine)
@@ -67,4 +95,4 @@ if __name__ == '__main__':
     session = Session()
 
     service = ModelService(session)
-    print service.list_transactions(11, limit=2)
+    print service.total_balance(chat_id=110)
