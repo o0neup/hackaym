@@ -3,17 +3,26 @@
 created by artemkorkhov at 2016/03/12
 """
 
-from flask import request, redirect, render_template
+import logging
+
+from flask import redirect, render_template, request
+from flask.blueprints import Blueprint
+
+from sqlalchemy.exc import IntegrityError
 
 from yandex_money.api import Wallet
 
-from src.app import app, session
-from src.model.models import User
+from src.core import session
 from src.model.service import ModelService
 from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
 
 
-def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO["CODE"]):
+logger = logging.getLogger(__name__)
+
+auth = Blueprint("auth", import_name=__name__)
+
+
+def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     """
     :param user_id:
     :param code_redirect_uri:
@@ -24,33 +33,34 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO["CODE"]):
                                          scope=YM_SCOPE)
 
 
-@app.route("/oauth_code")
+@auth.route("/oauth_code")
 def oauth_confirm():
     code = request.args.get("code")
     user_id = request.args.get("user_id")
     if not code:
         raise ValueError("The code is missing, and it's sucks :(")
-    ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO["TOKEN"])
+    ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO)
     token = Wallet.get_access_token(client_id=YM_CLIENT_ID, code=code,
                                     redirect_uri=ym_redirect_url)
-    account_info = Wallet(access_token=token).account_info()
+    account_info = Wallet(access_token=token['access_token']).account_info()
 
     service = ModelService(session)
     try:
-        service.create_user(uid=user_id, auth_token=token,
+        service.create_user(uid=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
+    except IntegrityError:
+        return redirect("{}/auth_confirmed".format(BASE_URL))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
-        print "Ololo, cannot save user"
-        raise e  # TODO handle general exception with redirect
-    else:
-        redirect("/auth_confirmed")
+        logger.exception(e)
+        return redirect("{}/auth_failed".format(BASE_URL))  # maybe parse error details into template
+    return redirect("{}/auth_confirmed".format(BASE_URL))
 
 
-@app.route("/auth_confirmed")
+@auth.route("/auth_confirmed")
 def auth_confirmed():
-    render_template()
+    return render_template("confirm.html")
 
 
-if __name__ == '__main__':
-    print get_auth_url(user_id=10000)
-
+@auth.route("/auth_failed")
+def auth_failed():
+    return render_template("failed.html")
