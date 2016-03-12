@@ -8,8 +8,13 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+BASE_URL = "https://mrxmoscow.com"
 
-BOT_TOKEN = "**SECRET**"
+
+REDIRECT_TO = {
+    "CODE": "oauth_code",
+    "TOKEN": "oauth_token"
+}
 
 
 TELEGRAM = {
@@ -17,6 +22,9 @@ TELEGRAM = {
     "api_uri": "https://api.telegram.org/bot{}/{}",
     "callback_uri": "https://mrxmoscow.com/aaa"
 }
+
+
+YM_SCOPE = ["account-info", "operation-details", "payment-p2p", "payment-shop"]
 
 
 try:
