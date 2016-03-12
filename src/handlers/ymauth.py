@@ -19,7 +19,6 @@ from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
 
 logger = logging.getLogger(__name__)
 
-BP_NAME = "auth"
 auth = Blueprint("auth", import_name=__name__)
 
 
@@ -29,7 +28,7 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     :param code_redirect_uri:
     :return:
     """
-    redirect_url = "{}/{}/{}?user_id={}".format(BASE_URL, BP_NAME, code_redirect_uri, user_id)
+    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
     return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
                                          scope=YM_SCOPE)
 
@@ -40,7 +39,7 @@ def oauth_confirm():
     user_id = request.args.get("user_id")
     if not code:
         raise ValueError("The code is missing, and it's sucks :(")
-    ym_redirect_url = "{}/{}/{}".format(BASE_URL, BP_NAME, REDIRECT_TO)
+    ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO)
     token = Wallet.get_access_token(client_id=YM_CLIENT_ID, code=code,
                                     redirect_uri=ym_redirect_url)
     account_info = Wallet(access_token=token['access_token']).account_info()
@@ -50,11 +49,11 @@ def oauth_confirm():
         service.create_user(uid=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
     except IntegrityError:
-        return redirect("{}/{}/auth_confirmed".format(BASE_URL, BP_NAME))
+        return redirect("{}/auth_confirmed".format(BASE_URL))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
         logger.exception(e)
-        return redirect("{}/{}/auth_failed".format(BASE_URL, BP_NAME))  # maybe parse error details into template
-    return redirect("{}/{}/auth_confirmed".format(BASE_URL, BP_NAME))
+        return redirect("{}/auth_failed".format(BASE_URL))  # maybe parse error details into template
+    return redirect("{}/auth_confirmed".format(BASE_URL))
 
 
 @auth.route("/auth_confirmed")
