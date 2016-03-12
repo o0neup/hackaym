@@ -50,6 +50,6 @@ def handle_group_message(message):
         mem_storage[message["from"]["username"]] = []
         r = requests.post(app.config["TELEGRAM"]["api_uri"].format(app.config["TELEGRAM"]["token"], "sendMessage"),
                       data={"chat_id": message["chat"]["id"], "text": u"Привет, @{}".format(message["from"]["username"]), "reply_to_message_id": message[
-                          "message_id"], "reply_markup": '{"force_replay": true, "selective": true}'}
+                          "message_id"], "reply_markup": '{"force_reply": true, "selective": true}'}
                       )
     return
