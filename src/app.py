@@ -56,7 +56,7 @@ def oauth_confirm():
 
     service = ModelService(session)
     try:
-        service.create_user(uid=user_id, auth_token=token,
+        service.create_user(uid=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
         print "Ololo, cannot save user"
