@@ -9,7 +9,12 @@ import logging
 import requests
 
 from flask import Flask, request
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+
+engine = create_engine("postgres://localhost:5432/")
+session = sessionmaker(bind=engine)()
 
 app = Flask(__name__)
 app.config.from_object('settings')
