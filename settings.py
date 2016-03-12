@@ -11,6 +11,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_URL = "https://mrxmoscow.com"
 
 
+PSQL = "postgres://hackaym:hackamakaka@localhost:5432/ym"
+
 REDIRECT_TO = "oauth_code"
 
 TELEGRAM = {

@@ -15,10 +15,10 @@ from sqlalchemy.orm import sessionmaker
 from yandex_money.api import Wallet
 
 from src.model.service import ModelService
-from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
+from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO, PSQL
 
 
-engine = create_engine("postgres://localhost:5432/")
+engine = create_engine(PSQL)
 session = sessionmaker(bind=engine)()
 
 app = Flask(__name__)
