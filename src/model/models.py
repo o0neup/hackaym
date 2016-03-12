@@ -9,6 +9,7 @@ from settings import PSQL
 
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = 'u'
     __table_args__ = {'schema': 'hackaym'}
@@ -17,12 +18,14 @@ class User(Base):
     auth_token = Column("auth_token", String)
     account_id = Column("account_id", String)
 
+
 class Chat(Base):
     __tablename__ = 'chat'
     __table_args__ = {'schema': 'hackaym'}
 
     id = Column("id", Integer, primary_key=True)
     name = Column("name", String)
+
 
 class Transaction(Base):
     __tablename__ = 'transaction'
@@ -60,6 +63,7 @@ def as_dict(model, columns=None):
             ret[key] = str(ret[key])
 
     return ret
+
 
 if __name__ == '__main__':
     from sqlalchemy import create_engine

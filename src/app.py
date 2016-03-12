@@ -11,12 +11,15 @@ import requests
 from flask import Flask, request, redirect, render_template
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 
 from yandex_money.api import Wallet
 
 from src.model.service import ModelService
 from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO, PSQL
 
+
+logger = logging.getLogger(__name__)
 
 engine = create_engine(PSQL)
 session = sessionmaker(bind=engine)()
@@ -58,10 +61,12 @@ def oauth_confirm():
     try:
         service.create_user(uid=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
-    except Exception as e:  # TODO handle exceptions with invalid user_id!
-        return redirect("{}/auth_failed".format(BASE_URL))  # maybe parse error details into template
-    else:
+    except IntegrityError:
         return redirect("{}/auth_confirmed".format(BASE_URL))
+    except Exception as e:  # TODO handle exceptions with invalid user_id!
+        logger.exception(e)
+        return redirect("{}/auth_failed".format(BASE_URL))  # maybe parse error details into template
+    return redirect("{}/auth_confirmed".format(BASE_URL))
 
 
 @app.route("/auth_confirmed")
@@ -100,7 +105,7 @@ def handle_group_message(message):
                       data={"chat_id": message["chat"]["id"], "text": u"Привет, @{}".format(message["from"]["username"]), "reply_to_message_id": message[
                           "message_id"], "reply_markup": '{"force_reply": true, "selective": true}'}
                       )
-    return
+    return r.json()
 
 
 if __name__ == "__main__":
