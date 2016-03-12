@@ -40,6 +40,25 @@ class Transaction(Base):
     from_acc = relationship(User, foreign_keys=from_acc_id)
     to_acc = relationship(User, foreign_keys=to_acc_id)
 
+
+def as_dict(model, columns=None):
+
+    if hasattr(model,"__table__"):
+        ret = {c.name: getattr(model, c.name) for c in model.__table__.columns}
+    else:
+        ret = {}
+        for one in model:
+            ret.update({c.name: getattr(one, c.name) for c in one.__table__.columns})
+
+    if columns is not None:
+        ret = {x: ret.get(x) for x in columns}
+
+    for key in ret.keys():
+        if type(ret[key]) == datetime:
+            ret[key] = str(ret[key])
+
+    return ret
+
 if __name__ == '__main__':
     from sqlalchemy import create_engine
     from sqlalchemy import *
