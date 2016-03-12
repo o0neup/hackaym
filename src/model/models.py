@@ -15,6 +15,7 @@ class User(Base):
     __table_args__ = {'schema': 'hackaym'}
 
     id = Column("id", Integer, primary_key=True)
+    # name = Column("name", String)
     auth_token = Column("auth_token", String)
     account_id = Column("account_id", String)
 

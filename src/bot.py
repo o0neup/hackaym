@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
 from src.model.service import ModelService
 from src.states.info import rootInfoState
+import traceback
 
 engine = create_engine("postgres://localhost:5432/")
 Session = sessionmaker(bind=engine)
@@ -58,13 +59,6 @@ command_dict = {
 
 user_states = {}
 
-def handle_state(message):
-    state = user_states[message.from_user.id].next_node(message)
-
-    bot.send_message(message.chat.id, **state.next_message(message))
-    user_states[message.from_user.id] = state
-
-
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     logging.info(message)
@@ -85,9 +79,18 @@ def handle_info(message):
 
     handle_state(message)
 
-
-
 @bot.message_handler(func=lambda message: True)
+def handle_state(message):
+    try:
+        state = user_states[message.from_user.id].next_node(message)
+    #
+        bot.send_message(message.chat.id, **state.next_message(message))
+        user_states[message.from_user.id] = state
+    except:
+        traceback.print_exc()
+
+
+# @bot.message_handler(func=lambda message: True)
 def save_user(message):
     logger.info(message)
     username = message.from_user.username
@@ -130,7 +133,6 @@ def save_user(message):
                                  "text"]), reply_markup=types.ForceReply(selective=True))
         else:
             save_and_send_next(message.text)
-
 
 
 storage = {}
