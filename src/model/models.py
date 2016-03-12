@@ -24,7 +24,7 @@ class Chat(Base):
     __table_args__ = {'schema': 'hackaym'}
 
     id = Column("id", Integer, primary_key=True)
-    name = Column("name", String)
+    name = Column("name", String, unique=True)
 
 
 class Transaction(Base):

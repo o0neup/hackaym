@@ -64,6 +64,15 @@ class ModelService(object):
         self.session.add(transaction)
         self.session.commit()
 
+    def user_chat_names(self, uid):
+        self._ensure_user(uid)
+        chats = self.session.query(Transaction, Chat)\
+            .filter(Transaction.chat_id == Chat.id)\
+            .filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid)).distinct(Chat.name).all()
+
+        return [chat[1].name for chat in chats]
+
+
     def list_transactions(self, uid=None, chat_id=None, limit=10):
         if uid is None and chat_id is None:
             raise ValueError("At least one of the following should not be null: uid, chat_id")
@@ -113,4 +122,4 @@ if __name__ == '__main__':
     session = Session()
 
     service = ModelService(session)
-    print service._ensure_user(1)
+    print service.user_chat_names(11)

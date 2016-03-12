@@ -45,4 +45,16 @@ def optimal_settleup(balances):
 
     return min_transacations
 
+balances = {
+    "Anton": -201,
+    "Artem": -150,
+    "Ololosha": 0,
+    "Igor": 50,
+    "Alex": 300,
+    "Terebonka": 1
+}
+
+print optimal_settleup(balances.items())
+
+
 
