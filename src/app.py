@@ -28,5 +28,20 @@ print r.status_code
 @app.route('/aaa', methods=["POST"])
 def handle():
     app.logger.info(request.json)
-    print request.json()
+
+    if "message" in request.json:
+        message = request.json["message"]
+        if message["chat"]["type"] == "private":
+            handle_private_message(message)
+        elif message["chat"]["type"] == "group":
+            handle_group_message(message)
+    else:
+        return
     return "Ok"
+
+
+def handle_private_message(message):
+    pass
+
+def handle_group_message(message):
+    pass
