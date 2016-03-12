@@ -59,10 +59,9 @@ def oauth_confirm():
         service.create_user(uid=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
-        print "Ololo, cannot save user"
-        raise e  # TODO handle general exception with redirect
+        return redirect("/auth_failed")  # maybe parse error details into template
     else:
-        redirect("/auth_confirmed")
+        return redirect("/auth_confirmed")
 
 
 @app.route("/auth_confirmed")
