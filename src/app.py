@@ -32,7 +32,7 @@ print r.status_code
 mem_storage = {}
 
 
-def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO["CODE"]):
+def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     """
     :param user_id:
     :param code_redirect_uri:
@@ -49,7 +49,7 @@ def oauth_confirm():
     user_id = request.args.get("user_id")
     if not code:
         raise ValueError("The code is missing, and it's sucks :(")
-    ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO["TOKEN"])
+    ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO)
     token = Wallet.get_access_token(client_id=YM_CLIENT_ID, code=code,
                                     redirect_uri=ym_redirect_url)
     account_info = Wallet(access_token=token).account_info()

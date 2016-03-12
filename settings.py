@@ -11,11 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_URL = "https://mrxmoscow.com"
 
 
-REDIRECT_TO = {
-    "CODE": "oauth_code",
-    "TOKEN": "oauth_token"
-}
-
+REDIRECT_TO = "oauth_code"
 
 TELEGRAM = {
     "token": "185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8",
