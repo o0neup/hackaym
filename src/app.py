@@ -52,7 +52,7 @@ def oauth_confirm():
     ym_redirect_url = "{}/{}".format(BASE_URL, REDIRECT_TO)
     token = Wallet.get_access_token(client_id=YM_CLIENT_ID, code=code,
                                     redirect_uri=ym_redirect_url)
-    account_info = Wallet(access_token=token).account_info()
+    account_info = Wallet(access_token=token['access_token']).account_info()
 
     service = ModelService(session)
     try:
@@ -102,3 +102,7 @@ def handle_group_message(message):
                           "message_id"], "reply_markup": '{"force_reply": true, "selective": true}'}
                       )
     return
+
+
+if __name__ == "__main__":
+    print get_auth_url(10000)
