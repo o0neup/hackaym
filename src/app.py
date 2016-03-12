@@ -20,8 +20,8 @@ r = requests.get(app.config["TELEGRAM"]["api_uri"].format(app.config["TELEGRAM"]
 print r.status_code
 
 
-@app.route('/aaa')
+@app.route('/aaa', methods=["POST"])
 def handle():
     app.logger.info(request.json)
-    print request.json
+    print request.json()
     return "Ok"
