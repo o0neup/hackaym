@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from yandex_money.api import Wallet
 
-from src.app import session
+from src.core import session
 from src.model.service import ModelService
 from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
 

@@ -9,21 +9,14 @@ import logging
 import requests
 
 from flask import Flask, request
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from src.handlers.ymauth import auth
-
-from settings import PSQL
 
 
 logger = logging.getLogger(__name__)
 
-engine = create_engine(PSQL)
-session = sessionmaker(bind=engine)()
-
 app = Flask(__name__)
-app.register_blueprint(auth, )
+app.register_blueprint(auth)
 app.config.from_object('settings')
 
 app.logger.setLevel(logging.INFO)
