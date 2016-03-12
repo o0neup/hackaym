@@ -6,6 +6,7 @@ import logging
 import datetime
 from sqlalchemy import or_
 from collections import defaultdict
+from sqlalchemy.orm.exc import NoResultFound
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +16,26 @@ class ModelService(object):
     def __init__(self, session):
         self.session = session
 
+    def _ensure_user(self, uid):
+        try:
+            self.session.query(User).filter(User.id == uid).one()
+        except NoResultFound:
+            self.create_user(uid)
+
+    def _ensure_chat(self, chat_id):
+        try:
+            self.session.query(Chat).filter(Chat.id == chat_id).one()
+        except NoResultFound:
+            self.create_chat(chat_id)
+
     def create_user(self, uid, auth_token=None, account_id=None):
         user = User(id=uid, auth_token=auth_token, account_id=account_id)
         self.session.add(user)
         self.session.commit()
 
     def add_wallet(self, uid, auth_token=None, account_id=None):
+        self._ensure_user(uid)
+
         user = self.session.query(User).filter(User.id == uid).one()
 
         if user.auth_token is not None or user.account_id is not None:
@@ -37,6 +52,10 @@ class ModelService(object):
         self.session.commit()
 
     def create_transaction(self, from_uid, to_uid, chat_id, amount, date=None, description=None):
+        self._ensure_user(from_uid)
+        self._ensure_user(to_uid)
+        self._ensure_chat(chat_id)
+        
         if date is None:
             date = datetime.datetime.now()
 
@@ -91,8 +110,7 @@ if __name__ == '__main__':
     engine = create_engine("postgres://localhost:5432/")
     Session = sessionmaker(bind=engine)
 
-    # create a Session
     session = Session()
 
     service = ModelService(session)
-    print service.total_balance(chat_id=110)
+    print service._ensure_user(1)
