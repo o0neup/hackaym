@@ -1,4 +1,5 @@
-__author__ = 'ffuuugor'
+# coding: utf-8
+
 from models import User, Transaction, Chat, as_dict
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
@@ -7,6 +8,9 @@ import datetime
 from sqlalchemy import or_
 from collections import defaultdict
 from sqlalchemy.orm.exc import NoResultFound
+
+
+__author__ = 'ffuuugor'
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +55,12 @@ class ModelService(object):
         self.session.add(chat)
         self.session.commit()
 
+    def update_chat(self, chat_id, name):
+        chat = self.session.query(Chat).filter(Chat.id == chat_id).one()
+        chat.name = name
+        self.session.add(chat)
+        self.session.commit()
+
     def create_transaction(self, from_uid, to_uid, chat_id, amount, date=None, description=None):
         self._ensure_user(from_uid)
         self._ensure_user(to_uid)
@@ -63,6 +73,15 @@ class ModelService(object):
                                   amount=amount, date=date, description=description)
         self.session.add(transaction)
         self.session.commit()
+
+    def user_chat_names(self, uid):
+        self._ensure_user(uid)
+        chats = self.session.query(Transaction, Chat)\
+            .filter(Transaction.chat_id == Chat.id)\
+            .filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid)).distinct(Chat.name).all()
+
+        return [chat[1].name for chat in chats]
+
 
     def list_transactions(self, uid=None, chat_id=None, limit=10):
         if uid is None and chat_id is None:
@@ -79,9 +98,12 @@ class ModelService(object):
         result = query.limit(limit).all()
         return [as_dict(x, columns=["name", "description", "date", "from_acc_id", "to_acc_id"]) for x in result]
 
-    def total_balance(self, uid=None, chat_id=None):
-        if uid is None and chat_id is None:
+    def total_balance(self, uid=None, chat_id=None, chat_name=None):
+        if uid is None and chat_id is None and chat_name is None:
             raise ValueError("At least one of the following should not be null: uid, chat_id")
+
+        if chat_name is not None:
+            chat_id = self.session.query(Chat).filter(Chat.name == chat_name).one().id
 
         query = self.session.query(Transaction)
 
@@ -103,6 +125,9 @@ class ModelService(object):
             balances[transaction.from_acc_id] -= transaction.amount
             balances[transaction.to_acc_id] += transaction.amount
 
+        # user_object = self.session.query(User).filter(User.id.in_(users)).all()
+        # names = {u.id: u.name}
+
         return {key: val for key, val in balances.iteritems() if key in users }
 
 
@@ -113,4 +138,5 @@ if __name__ == '__main__':
     session = Session()
 
     service = ModelService(session)
-    print service._ensure_user(1)
+    # service.create_chat(101,"Terebonka")
+    print service.total_balance(chat_name='Ololosha')

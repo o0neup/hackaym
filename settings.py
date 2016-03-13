@@ -13,6 +13,8 @@ BASE_URL = "https://mrxmoscow.com"
 
 PSQL = "postgres://hackaym:hackamakaka@localhost:5432/ym"
 
+APP_NAME = "ymhacka"
+
 REDIRECT_TO = "oauth_code"
 
 TELEGRAM = {
