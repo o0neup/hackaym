@@ -8,6 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
 from src.model.service import ModelService
 from src.states.info import rootInfoState
+from src.states.suggest import rootSuggestState
+from src.states.settleup import rootSettleupState
 import traceback
 
 engine = create_engine("postgres://localhost:5432/")
@@ -76,16 +78,29 @@ def handle_bill(message):
 @bot.message_handler(commands=['info'])
 def handle_info(message):
     user_states[message.from_user.id] = rootInfoState
+    handle_state(message)
 
+@bot.message_handler(commands=['suggest'])
+def handle_info(message):
+    user_states[message.from_user.id] = rootSuggestState
+    handle_state(message)
+
+@bot.message_handler(commands=['settleup'])
+def handle_info(message):
+    user_states[message.from_user.id] = rootSettleupState
     handle_state(message)
 
 @bot.message_handler(func=lambda message: True)
 def handle_state(message):
     try:
         state = user_states[message.from_user.id].next_node(message)
-    #
-        bot.send_message(message.chat.id, **state.next_message(message))
-        user_states[message.from_user.id] = state
+
+        errmsg = state.next_check(message)
+        if errmsg is None:
+            bot.send_message(message.chat.id, **state.next_message(message))
+            user_states[message.from_user.id] = state
+        else:
+            bot.send_message(message.chat.id, text=errmsg)
     except:
         traceback.print_exc()
 

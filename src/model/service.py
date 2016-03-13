@@ -28,6 +28,10 @@ class ModelService(object):
         except NoResultFound:
             self.create_chat(chat_id)
 
+    def chat_id(self, chat_name):
+        chat = self.session.query(Chat).filter(Chat.name == chat_name).one()
+        return chat.id
+
     def create_user(self, uid, auth_token=None, account_id=None):
         user = User(id=uid, auth_token=auth_token, account_id=account_id)
         self.session.add(user)
@@ -134,5 +138,6 @@ if __name__ == '__main__':
     session = Session()
 
     service = ModelService(session)
-    # service.create_chat(101,"Terebonka")
-    print service.total_balance(chat_name='Ololosha')
+    # service.create_chat(-147219024,"Trump")
+    service.create_transaction(82493396, 112, -147219024, 350)
+    # print service.total_balance(chat_id=101)

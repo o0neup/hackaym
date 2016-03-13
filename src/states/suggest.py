@@ -6,20 +6,21 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
 from src.model.service import ModelService
 from base import Node
+from src.helpers import optimal_settleup
 
 engine = create_engine("postgres://localhost:5432/")
 Session = sessionmaker(bind=engine)
 session = Session()
 service = ModelService(session)
 
-def render_balance(balance_dict):
-    if len(balance_dict) > 0:
+def render_suggest(suggest_list):
+    if len(suggest_list) > 0:
         return {
-            "text": "\n".join(["{}: {} руб.".format(x,y) for x,y in balance_dict.items()])
+            "text": "\n".join(["{} -> {}: {} руб.".format(x,y,z) for x,y,z in suggest_list])
         }
     else:
         return {
-            "text": "Падение рыка недвижимости вам не страшно"
+            "text": "Можете переебаться бесплатно"
         }
 
 def render_buttons(text, buttons_list):
@@ -31,25 +32,25 @@ def render_buttons(text, buttons_list):
         "reply_markup": markup
     }
 
-privateInfoState2 = Node(
-    msgfunc=lambda x: render_balance(service.total_balance(chat_name=x.text))
+privateSuggestState2 = Node(
+    msgfunc=lambda x: render_suggest(optimal_settleup(service.total_balance(chat_name=x.text).items()))
 )
 
-privateInfoState = Node(
+privateSuggestState = Node(
     msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.id)),
     keyfunc=lambda x: True,
-    edges={True: privateInfoState2}
+    edges={True: privateSuggestState2}
 )
 
 
-publicInfoState = Node(
-    msgfunc=lambda x: render_balance(service.total_balance(chat_id=x.chat.id)),
+publicSuggestState = Node(
+    msgfunc=lambda x: render_suggest(optimal_settleup(service.total_balance(chat_id=x.chat.id).items())),
 )
 
-rootInfoState = Node(
+rootSuggestState = Node(
     msgfunc=None,
     keyfunc=lambda x: x.chat.id > 0,
-    edges = {True: privateInfoState,
-            False: publicInfoState}
+    edges = {True: privateSuggestState,
+            False: publicSuggestState}
 )
 
