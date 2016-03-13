@@ -42,7 +42,7 @@ def oauth_confirm():
         return redirect("{}/auth_confirmed?user_id={}".format(BASE_URL, user_id))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
         logger.exception(e)
-        return redirect("{}/auth_failed?user_id={}&error={}".format(BASE_URL, user_id, e))
+        return redirect("{}/auth_failed?user_id={}".format(BASE_URL, user_id))
     return redirect("{}/auth_confirmed?user_id={}".format(BASE_URL, user_id))
 
 
@@ -60,8 +60,6 @@ def auth_confirmed():
 @auth.route("/auth_failed")
 def auth_failed():
     user_id = request.args.get("user_id")
-    error = request.args.get("error")
-    logger.exception(error)
 
     if user_id:
         service = ModelService(session)
