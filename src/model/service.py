@@ -32,6 +32,12 @@ class ModelService(object):
         except NoResultFound:
             self.create_chat(chat_id, name=chat_name)
 
+    def update_user(self, username, chat_id):
+        user = self.session.query(User).filter(User.id == username).one()
+        user.chat_id = chat_id
+        self.session.add(user)
+        self.session.commit()
+
     def chat_id(self, chat_name):
         chat = self.session.query(Chat).filter(Chat.name == chat_name).one()
         return chat.id

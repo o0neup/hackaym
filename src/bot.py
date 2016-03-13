@@ -135,6 +135,7 @@ def handle_message(message):
     else:
         service._ensure_chat(message.chat.id, message.chat.username)
         service._ensure_user(username, message.chat.id)
+        service.update_user(username, message.chat.id)
 
 
 
