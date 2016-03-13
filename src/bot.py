@@ -19,7 +19,9 @@ service = ModelService(session)
 
 # token = '185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8'
 # token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
-token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
+# token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
+
+token = '184775317:AAEOyy9Ex2AE5ER5r5FOLClhcmquDLQdMds'  # artyomka_token
 bot = telebot.TeleBot(token)
 
 telebot.logger.setLevel(logging.INFO)
@@ -77,8 +79,9 @@ def handle_command(message):
     write_to_storage(message.from_user.id, message.chat.id, message.text)
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
-    bot.send_message(message.chat.id,
-                     render_invitation(service.user_chat_names(message.from_user.id)))
+    invitation = render_invitation(service.user_chat_names(message.from_user.id))
+    if invitation is not None:
+        bot.send_message(message.chat.id, **invitation)
 
 
 @bot.message_handler(commands=['info'])
@@ -103,7 +106,6 @@ def handle_state(message):
     try:
         if message.from_user.username not in user_states:
             return handle_message(message)
-
 
         state = user_states[message.from_user.username].next_node(message)
         errmsg = state.next_check(message)
