@@ -24,8 +24,8 @@ service = ModelService(session)
 
 
 # token = '185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8'
-# token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
-token = '171350837:AAHZCrB8sr8naeAo_2G4761PTqwvx22cBZg'
+token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
+# token = '171350837:AAHZCrB8sr8naeAo_2G4761PTqwvx22cBZg'
 
 # token = '184775317:AAEOyy9Ex2AE5ER5r5FOLClhcmquDLQdMds'  # artyomka_token
 bot = telebot.TeleBot(token)
@@ -227,8 +227,7 @@ def handle_message(message):
             key, messages, question))
 
         def save_and_send_next(text):
-            write_to_storage(message.from_user.id,
-                             message.chat.id, text)
+            write_to_storage(message.from_user.username, text)
             if next_question is not None:
                 bot.send_message(message.chat.id, "@{}, {}".format(username, next_question[
                                  "text"]), reply_markup=types.ForceReply(selective=True))
