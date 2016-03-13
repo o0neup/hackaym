@@ -26,11 +26,11 @@ class ModelService(object):
         except NoResultFound:
             self.create_user(username)
 
-    def _ensure_chat(self, chat_id):
+    def _ensure_chat(self, chat_id, chat_name=None):
         try:
             self.session.query(Chat).filter(Chat.id == chat_id).one()
         except NoResultFound:
-            self.create_chat(chat_id)
+            self.create_chat(chat_id, name=chat_name)
 
     def chat_id(self, chat_name):
         chat = self.session.query(Chat).filter(Chat.name == chat_name).one()

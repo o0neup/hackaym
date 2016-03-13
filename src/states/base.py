@@ -10,7 +10,7 @@ class Node:
         self.storage = {}
 
     def next_node(self, message):
-        self.storage[message.from_user.id] = message
+        self.storage[message.from_user.username] = message
         if self.keyfunc is not None:
             return self.edges[self.keyfunc(message)]
 

@@ -13,17 +13,9 @@ from src.states.suggest import rootSuggestState
 from src.states.settleup import rootSettleupState
 import traceback
 
-engine = create_engine("postgres://hackaym@localhost:5432/ym")
-Session = sessionmaker(bind=engine)
-
-session = Session()
-
-service = ModelService(session)
-
-
 # token = '185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8'
-token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
-# token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
+# token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
+token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
 bot = telebot.TeleBot(token)
 
 telebot.logger.setLevel(logging.INFO)
@@ -31,7 +23,6 @@ logger = telebot.logger
 logging.basicConfig(level=logging.INFO)
 
 service = ModelService(sessionmaker(bind=create_engine("postgres://localhost:5432/ym"))())
-
 
 def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
@@ -67,6 +58,8 @@ user_states = {}
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
+    if message.from_user.username in user_states:
+        del user_states[message.from_user.username]
     logging.info(message)
     markup = types.ForceReply()
     bot.send_message(message.chat.id, "Hey!", reply_markup=markup)
@@ -74,6 +67,9 @@ def send_welcome(message):
 
 @bot.message_handler(commands=['bill'])
 def handle_command(message):
+    if message.from_user.username in user_states:
+        del user_states[message.from_user.username]
+
     logger.info(message)
     write_to_storage(message.from_user.id, message.chat.id, message.text)
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
@@ -81,39 +77,47 @@ def handle_command(message):
 
 @bot.message_handler(commands=['info'])
 def handle_info(message):
-    user_states[message.from_user.id] = rootInfoState
+    user_states[message.from_user.username] = rootInfoState
     handle_state(message)
 
 @bot.message_handler(commands=['suggest'])
 def handle_info(message):
-    user_states[message.from_user.id] = rootSuggestState
+    user_states[message.from_user.username] = rootSuggestState
     handle_state(message)
 
 @bot.message_handler(commands=['settleup'])
 def handle_info(message):
-    user_states[message.from_user.id] = rootSettleupState
+    user_states[message.from_user.username] = rootSettleupState
     handle_state(message)
 
-# @bot.message_handler(func=lambda message: True)
+@bot.message_handler(func=lambda message: message.from_user.username is not None)
 def handle_state(message):
     try:
-        state = user_states[message.from_user.id].next_node(message)
+        if message.from_user.username not in user_states:
+            return handle_message(message)
 
+
+        state = user_states[message.from_user.username].next_node(message)
         errmsg = state.next_check(message)
         if errmsg is None:
             bot.send_message(message.chat.id, **state.next_message(message))
-            user_states[message.from_user.id] = state
+            user_states[message.from_user.username] = state
         else:
             bot.send_message(message.chat.id, text=errmsg)
     except:
         traceback.print_exc()
 
 
-@bot.message_handler(func=lambda message: message.from_user.username is not None)
 def handle_message(message):
     logger.info(message)
     username = message.from_user.username
     service._ensure_user(username)
+
+    if message.chat.title is not None:
+        service._ensure_chat(message.chat.id, message.chat.title)
+    else:
+        service._ensure_chat(message.chat.id, message.chat.username)
+
     logger.info("User id: '{}', username: '{}'".format(
         message.from_user.id, username))
     key = storage_key(message.from_user.id, message.chat.id)
@@ -140,6 +144,8 @@ def handle_message(message):
                 logger.info("Question sequence is over")
                 bot.send_message(message.chat.id, "@{}, question sequence is over, answers are: {}".format(
                     username, messages[1:]))
+                service.create_transaction(username, messages[1][1:], message.chat.id,
+                                           amount=int(messages[2]), description=messages[3])
 
         if "parser" in question:
             if question["parser"](message.text) is not None:

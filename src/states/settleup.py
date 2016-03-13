@@ -42,7 +42,7 @@ def shortSettle(message, chat_id):
     }
 
 def longSettle(message):
-    from_user_id = message.from_user.id
+    from_user_id = message.from_user.username
     to_user_id = int(chooseRecipientState.storage[from_user_id].text)
     amount = int(chooseAmountState.storage[from_user_id].text)
     service.create_transaction(from_user_id, to_user_id, message.chat.id, -amount, description="Ручной settle up")
@@ -52,11 +52,11 @@ def longSettle(message):
     }
 
 def longSettle2(message):
-    from_user_id = message.from_user.id
+    from_user_id = message.from_user.username
     to_user_id = int(chooseRecipientState.storage[from_user_id].text)
     amount = int(chooseAmountState.storage[from_user_id].text)
     service.create_transaction(from_user_id, to_user_id,
-                               service.chat_id(privateSettleupState.storage[message.from_user.id].text),
+                               service.chat_id(privateSettleupState.storage[message.from_user.username].text),
                                -amount, description="Ручной settle up")
 
     return {
@@ -71,7 +71,7 @@ firstDoneState = Node(
 )
 
 firstDoneState2 = Node(
-    msgfunc=lambda x: shortSettle(x, service.chat_id(privateSettleupState.storage[x.from_user.id].text))
+    msgfunc=lambda x: shortSettle(x, service.chat_id(privateSettleupState.storage[x.from_user.username].text))
 )
 
 secondDoneState = Node(
@@ -102,14 +102,14 @@ chooseRecipientState = Node(
 
 chooseRecipientState2 = Node(
     msgfunc=lambda x: render_buttons("Кому вы хотите отдать деньги?",
-                                     candidates(chart_name=privateSettleupState.storage[x.from_user.id].text,
-                                                user_id=x.from_user.id)),
+                                     candidates(chart_name=privateSettleupState.storage[x.from_user.username].text,
+                                                user_id=x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: chooseAmountState2}
 )
 
 suggestedNochatState = Node(
-    msgfunc=lambda x:render_suggest_buttons(x, service.chat_id(privateSettleupState.storage[x.from_user.id].text)),
+    msgfunc=lambda x:render_suggest_buttons(x, service.chat_id(privateSettleupState.storage[x.from_user.username].text)),
     keyfunc=lambda x: x.text == "Другой вариант".decode("utf-8"),
     edges={
         True: chooseRecipientState2,
@@ -118,7 +118,7 @@ suggestedNochatState = Node(
 )
 
 privateSettleupState = Node(
-    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.id)),
+    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: suggestedNochatState}
 )

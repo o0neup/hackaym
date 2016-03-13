@@ -37,7 +37,7 @@ privateSuggestState2 = Node(
 )
 
 privateSuggestState = Node(
-    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.id)),
+    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: privateSuggestState2}
 )
