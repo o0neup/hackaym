@@ -12,12 +12,11 @@ from messages import r, DESCRIPTIONS
 from src.core import session
 from src.model.models import User
 from src.model.service import ModelService
-
-from src.states.info import rootInfoState
-from src.states.suggest import rootSuggestState
-from src.states.settleup import rootSettleupState
 from src.states.history import rootHistoryState
+from src.states.info import rootInfoState
 from src.states.money import render_invitation
+from src.states.settleup import rootSettleupState
+from src.states.suggest import rootSuggestState
 
 from settings import YM_SCOPE, BASE_URL, REDIRECT_TO, YM_CLIENT_ID
 
@@ -36,7 +35,22 @@ logger = telebot.logger
 logging.basicConfig(level=logging.INFO)
 
 
-def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
+def parse_single_username(message):
+    logger.info("Parse single username in '{}'".format(message.text))
+    username = None
+    if message.text.strip() == "я":
+        username = message.from_user.username
+    else:
+        result = re.findall("@\w+", message.text)
+        if len(result) == 1:
+            username = result[0]
+
+    return username
+
+def parse_username(message):
+    text = message.text
+
+    def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     """
     :param user_id:
     :param code_redirect_uri:
@@ -49,12 +63,14 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
 
 def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
-    if re.search("@\w+", text):
-        return re.search("@\w+", text).group(0)
+    result = re.findall("@\w+", text)
+    if len(result) > 0:
+        return result
     return None
 
 
-def parse_amount(text):
+def parse_amount(message):
+    text = message.text
     logger.info("Parse amount in '{}'".format(text))
     try:
         return float(text)
@@ -64,6 +80,10 @@ def parse_amount(text):
 command_dict = {
     "bill": [
         {
+            "text": "Кто платил?",
+            "parser": parse_single_username,
+            "fall_back_message": "Это должен быть один username пользователя"
+        },
             "text": u"За кого вы платили?",
             "parser": parse_username,
             "fallback_message": "На имя пользователя не похоже, а должно. Введите правильное имя :)"
@@ -79,6 +99,7 @@ command_dict = {
 
 user_states = {}
 
+
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     if message.from_user.username in user_states:
@@ -89,16 +110,17 @@ def send_welcome(message):
 
 
 @bot.message_handler(commands=['bill'])
-def handle_command(message):
+def handle_bill(message):
     if message.from_user.username in user_states:
         del user_states[message.from_user.username]
 
     logger.info(message)
-    write_to_storage(message.from_user.id, message.chat.id, message.text)
+    write_to_storage(message.from_user.username, message.text)
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
 
-    invitation = render_invitation(service.user_chat_names(message.from_user.username))
+    invitation = render_invitation(
+        service.user_chat_names(message.from_user.username))
     if invitation is not None:
         bot.send_message(message.chat.id, **invitation)
 
@@ -154,10 +176,12 @@ def handle_info(message):
     user_states[message.from_user.username] = rootSettleupState
     handle_state(message)
 
+
 @bot.message_handler(commands=['history'])
 def handle_info(message):
     user_states[message.from_user.username] = rootHistoryState
     handle_state(message)
+
 
 @bot.message_handler(func=lambda message: message.from_user.username is not None)
 def handle_state(message):
@@ -190,7 +214,7 @@ def handle_message(message):
 
     logger.info("User id: '{}', username: '{}'".format(
         message.from_user.id, username))
-    key = storage_key(message.from_user.id, message.chat.id)
+    key = message.from_user.username
     if key in storage:
         messages = storage[key]
         command = messages[0].strip('/').split('@')[0]
@@ -212,16 +236,22 @@ def handle_message(message):
                                  "text"]), reply_markup=types.ForceReply(selective=True))
             else:
                 logger.info("Question sequence is over")
-                bot.send_message(
-                    message.chat.id,
-                    "@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
-                    username, messages[2], messages[3], messages[1]))
-                service.create_transaction(username, messages[1][1:], message.chat.id,
-                                           amount=int(messages[2]), description=messages[3])
+                total_amount = int(messages[3])
+                payer = messages[1]
+                for_users = messages[2]
+                description = messages[3]
+                for user in for_users:
+                    user_amount = int(total_amount / len(for_users))
+                    service.create_transaction(payer, user, message.chat.id,
+                                               amount=user_amount, description=description)
+                    bot.send_message(
+                        message.chat.id,
+                        "@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
+                            payer, user_amount, description, user))
 
         if "parser" in question:
-            if question["parser"](message.text) is not None:
-                parsed_message = question["parser"](message.text)
+            if question["parser"](message) is not None:
+                parsed_message = question["parser"](message)
                 logger.info("Parsed message: '{}'".format(parsed_message))
                 save_and_send_next(parsed_message)
             else:
@@ -236,12 +266,8 @@ def handle_message(message):
 storage = {}
 
 
-def storage_key(user_id, chat_id):
-    return "{},{}".format(user_id, chat_id)
-
-
-def write_to_storage(user_id, chat_id, value):
-    key = storage_key(user_id, chat_id)
+def write_to_storage(username, value):
+    key = username
     if key not in storage or (isinstance(value, str) and value.startswith('/')):
         storage[key] = []
 
