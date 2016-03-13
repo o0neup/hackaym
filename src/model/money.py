@@ -13,8 +13,22 @@ from src.core import session
 from src.model.models import User
 from src.model.service import ModelService
 
+from settings import APP_NAME
+
 
 logger = logging.getLogger(__name__)
+
+
+RESULT_CODES = {
+    "success": "success",
+    "refused": "refused",
+    "hold_for_pickup": "hold_for_pickup",
+    "illegal_params": "illegal_params",
+    "illegal_param_to": "illegal_param_to",
+    "illegal_param_amount": "illegal_param_amount",
+    "payee_not_found": "payee_not_found",
+    "authorization_reject": "authorization_reject",
+}
 
 
 class MoneyService(object):
@@ -44,7 +58,7 @@ class MoneyService(object):
 
     MAX_RETRIES = 3
 
-    def __init__(self, user_id, comission=0.005):
+    def __init__(self, user_id, comission=0.005, testmode=False, test_result="success"):
         self.service = ModelService(session)
         self.comission = comission
         try:
@@ -54,6 +68,8 @@ class MoneyService(object):
         self.wallet = Wallet(access_token=self.user.auth_token)
 
         self.process_retries = 1
+        self.testmode = testmode
+        self.test_result = test_result
 
     def _has_enough(self, required):
         """ Checks whether user has enough money to make a transfer.
@@ -74,10 +90,12 @@ class MoneyService(object):
         else:
             return self.BALANCE_ENOUGH
 
-    def issue_payment(self, to, amount, comment=None):
+    def issue_payment(self, to, amount, comment=None, label=APP_NAME):
         """ Issues payment of specified amount money from wallet holder to given user (to_id)
-        :param to_id:
+        :param to:
         :param amount:
+        :param comment:
+        :param label:
         :return:
         """
         # todo make default comment?
@@ -93,8 +111,13 @@ class MoneyService(object):
             "amount_due": amount,
             "comment": comment or "",
             "message": comment or "",
-            "label": "LE BILL"  # TODO change!!1111 tags(labels) are really fucking important
+            "label": label
         })
+        if self.testmode:
+            requests_opts.update({
+                "test_payment": True,
+                "test_result": self.test_result
+            })
         try:
             request = self.wallet.request_payment(options=requests_opts)
         except Exception as e:
@@ -130,6 +153,11 @@ class MoneyService(object):
                 "money_source": source,
                 "csc": csc
             })
+        if self.testmode:
+            process_opts.update({
+                "test_payment": True,
+                "test_result": self.test_result
+            })
         try:
             payment = self.wallet.process_payment(options=process_opts)
         except Exception as e:
@@ -146,5 +174,3 @@ class MoneyService(object):
     def phone_payment(self):
         # todo can be useful really. But not first priority :)
         raise NotImplementedError
-
-
