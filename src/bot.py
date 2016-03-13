@@ -6,12 +6,12 @@ import traceback
 
 import telebot
 from telebot import types
+from yandex_money.api import Wallet
 
 from messages import r, DESCRIPTIONS
 from src.core import session
 from src.model.models import User
 from src.model.service import ModelService
-from src.handlers.ymauth import get_auth_url
 
 from src.states.info import rootInfoState
 from src.states.suggest import rootSuggestState
@@ -19,6 +19,7 @@ from src.states.settleup import rootSettleupState
 from src.states.history import rootHistoryState
 from src.states.money import render_invitation
 
+from settings import YM_SCOPE, BASE_URL, REDIRECT_TO, YM_CLIENT_ID
 
 service = ModelService(session)
 
@@ -33,6 +34,17 @@ bot = telebot.TeleBot(token)
 telebot.logger.setLevel(logging.INFO)
 logger = telebot.logger
 logging.basicConfig(level=logging.INFO)
+
+
+def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
+    """
+    :param user_id:
+    :param code_redirect_uri:
+    :return:
+    """
+    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
+    return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
+                                         scope=YM_SCOPE)
 
 
 def parse_username(text):

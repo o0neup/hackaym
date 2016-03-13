@@ -15,23 +15,12 @@ from yandex_money.api import Wallet
 from src.core import session
 from src.bot import bot
 from src.model.service import ModelService
-from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
+from settings import YM_CLIENT_ID, BASE_URL, REDIRECT_TO
 
 
 logger = logging.getLogger(__name__)
 
 auth = Blueprint("auth", import_name=__name__)
-
-
-def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
-    """
-    :param user_id:
-    :param code_redirect_uri:
-    :return:
-    """
-    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
-    return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
-                                         scope=YM_SCOPE)
 
 
 @auth.route("/oauth_code")
