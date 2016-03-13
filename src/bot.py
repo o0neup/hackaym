@@ -82,8 +82,8 @@ command_dict = {
             "text": "Кто платил?",
             "parser": parse_single_username,
             "fall_back_message": "Это должен быть один username пользователя"
-        },
-            "text": u"За кого вы платили?",
+        }, {
+            "text": "За кого вы платили?",
             "parser": parse_username,
             "fallback_message": "На имя пользователя не похоже, а должно. Введите правильное имя :)"
         }, {
