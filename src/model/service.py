@@ -20,11 +20,11 @@ class ModelService(object):
     def __init__(self, session):
         self.session = session
 
-    def _ensure_user(self, uid):
+    def _ensure_user(self, username):
         try:
-            self.session.query(User).filter(User.id == uid).one()
+            self.session.query(User).filter(User.id == username).one()
         except NoResultFound:
-            self.create_user(uid)
+            self.create_user(username)
 
     def _ensure_chat(self, chat_id):
         try:
@@ -32,8 +32,8 @@ class ModelService(object):
         except NoResultFound:
             self.create_chat(chat_id)
 
-    def create_user(self, uid, auth_token=None, account_id=None):
-        user = User(id=uid, auth_token=auth_token, account_id=account_id)
+    def create_user(self, username, auth_token=None, account_id=None):
+        user = User(id=username, auth_token=auth_token, account_id=account_id)
         self.session.add(user)
         self.session.commit()
 
