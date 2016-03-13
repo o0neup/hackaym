@@ -62,7 +62,7 @@ def parse_username(message):
     text = message.text
     result = re.findall("@\w+", text)
     if len(result) > 0:
-        return map(lambda x: x.strip('a'), result)
+        return map(lambda x: x.strip('@'), result)
     return None
 
 
