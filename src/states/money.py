@@ -26,6 +26,6 @@ def render_invitation(users):
 
 
 AskForRegister = Node(
-    msgfunc=render_invitation(lambda x: service.user_chat_names(x.from_user.id)),
+    msgfunc=lambda x: render_invitation(service.user_chat_names(x.from_user.id)),
     keyfunc=None,
 )
