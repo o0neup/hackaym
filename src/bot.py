@@ -26,7 +26,7 @@ service = ModelService(session)
 
 # token = '185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8'
 # token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
-token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
+token = '171350837:AAHZCrB8sr8naeAo_2G4761PTqwvx22cBZg'
 
 # token = '184775317:AAEOyy9Ex2AE5ER5r5FOLClhcmquDLQdMds'  # artyomka_token
 bot = telebot.TeleBot(token)
