@@ -58,8 +58,7 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
                                          scope=YM_SCOPE)
 
-
-def parse_username(text):
+def parse_username(message):
     text = message.text
     logger.info("Parse username in '{}'".format(text))
     result = re.findall("@\w+", text)
@@ -271,3 +270,5 @@ def write_to_storage(username, value):
         storage[key] = []
 
     storage[key].append(value)
+
+bot.polling()
