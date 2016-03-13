@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship, backref
 from datetime import datetime
 
-from settings import PSQL
+# from settings import PSQL
 
 Base = declarative_base()
 
@@ -15,6 +15,7 @@ class User(Base):
     __table_args__ = {'schema': 'hackaym'}
 
     id = Column("id", Integer, primary_key=True)
+    username = Column("username", String)
     auth_token = Column("auth_token", String)
     account_id = Column("account_id", String)
 
@@ -68,8 +69,9 @@ def as_dict(model, columns=None):
 if __name__ == '__main__':
     from sqlalchemy import create_engine
     from sqlalchemy import *
-    sa_engine = create_engine(PSQL)
+    sa_engine = create_engine("postgres://localhost:5432/ym")
 
     Base.metadata.create_all(sa_engine)
 
 
+    print "done"
