@@ -52,9 +52,11 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     :param code_redirect_uri:
     :return:
     """
-    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
+    redirect_url = "{}/{}?user_id={}".format(
+        BASE_URL, code_redirect_uri, user_id)
     return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
                                          scope=YM_SCOPE)
+
 
 def parse_username(message):
     text = message.text
@@ -128,14 +130,16 @@ def handle_info(message):
 @bot.message_handler(commands=['add_yandex_money'])
 def handle_info(message):
     try:
-        user = service.session.query(User).filter(User.id == message.chat.username).one()
+        user = service.session.query(User).filter(
+            User.id == message.chat.username).one()
     except:
         logger.exception(traceback.print_exc())
         # todo handle exc
         user = None
 
     if message.chat.id > 0:
-        service._ensure_user(username=message.chat.username, chat_id=message.chat.id)
+        service._ensure_user(username=message.chat.username,
+                             chat_id=message.chat.id)
         if user and user.account_id:
             text = "Вы уже прикрепили кошелек."
         else:
@@ -152,9 +156,10 @@ def handle_info(message):
             )
         else:
             bot.send_message(chat_id=chat, text="Ваш URL для авторизации в Яндекс.Деньгах: {}".format(
-                    get_auth_url(user_id=message.chat.username)
-                ))
-            text = "@{}, Вам было отправлено приватное сообщение".format(message.chat.username)
+                get_auth_url(user_id=message.chat.username)
+            ))
+            text = "@{}, Вам было отправлено приватное сообщение".format(
+                message.chat.username)
     bot.send_message(chat_id=message.chat.id,
                      text=text)
 
@@ -235,8 +240,8 @@ def handle_message(message):
                 description = messages[4]
                 for user in for_users:
                     user_amount = int(total_amount / len(for_users))
-                    # service.create_transaction(payer, user, message.chat.id,
-                    #                            amount=user_amount, description=description)
+                    service.create_transaction(payer, user, message.chat.id,
+                                               amount=user_amount, description=description)
                     bot.send_message(
                         message.chat.id,
                         u"@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
