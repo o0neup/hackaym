@@ -246,6 +246,3 @@ def write_to_storage(user_id, chat_id, value):
         storage[key] = []
 
     storage[key].append(value)
-
-
-bot.polling()
