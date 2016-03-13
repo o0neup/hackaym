@@ -2,6 +2,7 @@ import logging
 
 import re
 import telebot
+from sqlalchemy import create_engine
 from telebot import types
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import sessionmaker
@@ -25,7 +26,10 @@ bot = telebot.TeleBot(token)
 
 telebot.logger.setLevel(logging.INFO)
 logger = telebot.logger
-# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
+
+service = ModelService(sessionmaker(bind=create_engine("postgres://localhost:5432/ym"))())
+
 
 def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
@@ -68,7 +72,7 @@ def send_welcome(message):
 
 @bot.message_handler(commands=['bill'])
 def handle_command(message):
-    logging.info(message)
+    logger.info(message)
     write_to_storage(message.from_user.id, message.chat.id, message.text)
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
@@ -90,7 +94,7 @@ def handle_state(message):
         traceback.print_exc()
 
 
-@bot.message_handler(func=lambda message: True)
+@bot.message_handler(func=lambda message: message.from_user.username is not None)
 def handle_message(message):
     logger.info(message)
     username = message.from_user.username

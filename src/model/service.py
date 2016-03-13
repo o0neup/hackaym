@@ -132,7 +132,7 @@ class ModelService(object):
 
 
 if __name__ == '__main__':
-    engine = create_engine("postgres://localhost:5432/")
+    engine = create_engine("postgres://localhost:5432/ym")
     Session = sessionmaker(bind=engine)
 
     session = Session()
