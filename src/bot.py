@@ -47,10 +47,8 @@ def parse_single_username(message):
 
     return username
 
-def parse_username(message):
-    text = message.text
 
-    def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
+def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
     """
     :param user_id:
     :param code_redirect_uri:
@@ -62,6 +60,7 @@ def parse_username(message):
 
 
 def parse_username(text):
+    text = message.text
     logger.info("Parse username in '{}'".format(text))
     result = re.findall("@\w+", text)
     if len(result) > 0:
