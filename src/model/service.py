@@ -48,7 +48,10 @@ class ModelService(object):
         self.session.commit()
 
     def user_chat(self, username):
-        user = self.session.query(User).filter(User.id == username).one()
+        try:
+            user = self.session.query(User).filter(User.id == username).one()
+        except:
+            return None
         return user.chat_id
 
     def add_wallet(self, username, auth_token=None, account_id=None):

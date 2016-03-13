@@ -1,12 +1,16 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
+import re
 import logging
 import traceback
 
 import telebot
 from telebot import types
+from yandex_money.api import Wallet
 
-import re
+from messages import r, DESCRIPTIONS
 from src.core import session
+from src.model.models import User
 from src.model.service import ModelService
 from src.states.history import rootHistoryState
 from src.states.info import rootInfoState
@@ -14,13 +18,14 @@ from src.states.money import render_invitation
 from src.states.settleup import rootSettleupState
 from src.states.suggest import rootSuggestState
 
+from settings import YM_SCOPE, BASE_URL, REDIRECT_TO, YM_CLIENT_ID
 
 service = ModelService(session)
 
 
 # token = '185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8'
 # token = '175818011:AAGwDqLPSKmec0grwy_pweW30SdCg0f0zDI'
-token = '217392807:AAGQiwgNtOTln6KHp-Z9f_X7cLqaeeC2MlY'
+token = '171350837:AAHZCrB8sr8naeAo_2G4761PTqwvx22cBZg'
 
 # token = '184775317:AAEOyy9Ex2AE5ER5r5FOLClhcmquDLQdMds'  # artyomka_token
 bot = telebot.TeleBot(token)
@@ -44,6 +49,19 @@ def parse_single_username(message):
 
 def parse_username(message):
     text = message.text
+
+    def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
+    """
+    :param user_id:
+    :param code_redirect_uri:
+    :return:
+    """
+    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
+    return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
+                                         scope=YM_SCOPE)
+
+
+def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
     result = re.findall("@\w+", text)
     if len(result) > 0:
@@ -60,22 +78,22 @@ def parse_amount(message):
         return None
 
 command_dict = {
-    "bill": [{
-        "text": "Кто платил?",
-        "parser": parse_single_username,
-        "fall_back_message": "Это должен быть один username пользователя"
-    },
+    "bill": [
         {
-            "text": "За кого платили?",
+            "text": "Кто платил?",
+            "parser": parse_single_username,
+            "fall_back_message": "Это должен быть один username пользователя"
+        },
+            "text": u"За кого вы платили?",
             "parser": parse_username,
-            "fallback_message": "Должно быть один или несколько username"
-    }, {
-            "text": "amount",
+            "fallback_message": "На имя пользователя не похоже, а должно. Введите правильное имя :)"
+        }, {
+            "text": "Сколько было заплачено?",
             "parser": parse_amount,
-            "fallback_message": "Это должно быть число"
-    }, {
-            "text": "Опишите операцию"
-    }
+            "fallback_message": "Не похоже, чтобы это были арабские цифры. Введите правильно, это не так трудно :)"
+        }, {
+            "text": r(DESCRIPTIONS)
+        }
     ]
 }
 
@@ -111,6 +129,40 @@ def handle_bill(message):
 def handle_info(message):
     user_states[message.from_user.username] = rootInfoState
     handle_state(message)
+
+
+@bot.message_handler(commands=['add_yandex_money'])
+def handle_info(message):
+    try:
+        user = service.session.query(User).filter(User.id == message.chat.username).one()
+    except:
+        logger.exception(traceback.print_exc())
+        # todo handle exc
+        user = None
+
+    if message.chat.id > 0:
+        service._ensure_user(username=message.chat.username, chat_id=message.chat.id)
+        if user and user.account_id:
+            text = "Вы уже прикрепили кошелек."
+        else:
+            text = "Ваш URL для авторизации в Яндекс.Деньгах: {}".format(
+                get_auth_url(user_id=message.chat.username)
+            )
+    else:
+        # todo handle users without chat instance
+        chat = service.user_chat(message.chat.username)
+        if chat is None:
+            text = ("Прикрепить кошелек можно только в личном чате со мной. "
+                    "@{}, создайте, пожалуйста, приватный чат со мной и повторите эту команду").format(
+                message.chat.username
+            )
+        else:
+            bot.send_message(chat_id=chat, text="Ваш URL для авторизации в Яндекс.Деньгах: {}".format(
+                    get_auth_url(user_id=message.chat.username)
+                ))
+            text = "@{}, Вам было отправлено приватное сообщение".format(message.chat.username)
+    bot.send_message(chat_id=message.chat.id,
+                     text=text)
 
 
 @bot.message_handler(commands=['suggest'])
@@ -184,15 +236,18 @@ def handle_message(message):
                                  "text"]), reply_markup=types.ForceReply(selective=True))
             else:
                 logger.info("Question sequence is over")
-                # bot.send_message(message.chat.id, "@{}, question sequence is over, answers are: {}".format(
-                #     username, messages[1:]))
                 total_amount = int(messages[3])
                 payer = messages[1]
                 for_users = messages[2]
                 description = messages[3]
                 for user in for_users:
+                    user_amount = int(total_amount / len(for_users))
                     service.create_transaction(payer, user, message.chat.id,
-                                               amount=int(total_amount / len(for_users)), description=description)
+                                               amount=user_amount, description=description)
+                    bot.send_message(
+                        message.chat.id,
+                        "@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
+                            payer, user_amount, description, user))
 
         if "parser" in question:
             if question["parser"](message) is not None:
@@ -217,6 +272,3 @@ def write_to_storage(username, value):
         storage[key] = []
 
     storage[key].append(value)
-
-
-bot.polling()

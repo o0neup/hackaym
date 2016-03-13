@@ -13,24 +13,14 @@ from sqlalchemy.exc import IntegrityError
 from yandex_money.api import Wallet
 
 from src.core import session
+from src.bot import bot
 from src.model.service import ModelService
-from settings import YM_SCOPE, YM_CLIENT_ID, BASE_URL, REDIRECT_TO
+from settings import YM_CLIENT_ID, BASE_URL, REDIRECT_TO
 
 
 logger = logging.getLogger(__name__)
 
 auth = Blueprint("auth", import_name=__name__)
-
-
-def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
-    """
-    :param user_id:
-    :param code_redirect_uri:
-    :return:
-    """
-    redirect_url = "{}/{}?user_id={}".format(BASE_URL, code_redirect_uri, user_id)
-    return Wallet.build_obtain_token_url(client_id=YM_CLIENT_ID, redirect_uri=redirect_url,
-                                         scope=YM_SCOPE)
 
 
 @auth.route("/oauth_code")
@@ -46,21 +36,34 @@ def oauth_confirm():
 
     service = ModelService(session)
     try:
-        service.create_user(username=user_id, auth_token=token['access_token'],
-                            account_id=int(account_info["account"]))
+        service.add_wallet(username=user_id, auth_token=token['access_token'],
+                           account_id=int(account_info["account"]))
     except IntegrityError:
-        return redirect("{}/auth_confirmed".format(BASE_URL))
+        return redirect("{}/auth_confirmed?user_id={}".format(BASE_URL, user_id))
     except Exception as e:  # TODO handle exceptions with invalid user_id!
         logger.exception(e)
-        return redirect("{}/auth_failed".format(BASE_URL))  # maybe parse error details into template
-    return redirect("{}/auth_confirmed".format(BASE_URL))
+        return redirect("{}/auth_failed?user_id={}".format(BASE_URL, user_id))
+    return redirect("{}/auth_confirmed?user_id={}".format(BASE_URL, user_id))
 
 
 @auth.route("/auth_confirmed")
 def auth_confirmed():
+    user_id = request.args.get("user_id")
+
+    if user_id:
+        service = ModelService(session)
+        chat_id = service.user_chat(username=user_id)
+        bot.send_message(chat_id=chat_id, text="Счет Яндекс.Денег успешно добавлен")
     return render_template("confirm.html")
 
 
 @auth.route("/auth_failed")
 def auth_failed():
+    user_id = request.args.get("user_id")
+
+    if user_id:
+        service = ModelService(session)
+        chat_id = service.user_chat(username=user_id)
+        bot.send_message(chat_id=chat_id,
+                         text="При авторизации в Яндекс.Деньгах возникла ошибка :(")
     return render_template("failed.html")

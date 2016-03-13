@@ -70,6 +70,6 @@ def as_dict(model, columns=None):
 if __name__ == '__main__':
     from sqlalchemy import create_engine
     from sqlalchemy import *
-    sa_engine = create_engine("postgres://localhost:5432")
+    sa_engine = create_engine("postgres://localhost:5432/ym")
 
     Base.metadata.create_all(sa_engine)
