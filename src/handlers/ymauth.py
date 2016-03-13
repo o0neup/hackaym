@@ -46,7 +46,7 @@ def oauth_confirm():
 
     service = ModelService(session)
     try:
-        service.create_user(uid=user_id, auth_token=token['access_token'],
+        service.create_user(username=user_id, auth_token=token['access_token'],
                             account_id=int(account_info["account"]))
     except IntegrityError:
         return redirect("{}/auth_confirmed".format(BASE_URL))

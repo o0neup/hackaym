@@ -14,8 +14,7 @@ class User(Base):
     __tablename__ = 'u'
     __table_args__ = {'schema': 'hackaym'}
 
-    id = Column("id", Integer, primary_key=True)
-    username = Column("username", String)
+    id = Column("username", String, primary_key=True)
     auth_token = Column("auth_token", String)
     account_id = Column("account_id", String)
 
@@ -33,8 +32,8 @@ class Transaction(Base):
     __table_args__ = {'schema': 'hackaym'}
 
     id = Column("id", Integer, primary_key=True, autoincrement=True)
-    from_acc_id = Column("from_acc_id", Integer, ForeignKey(User.id))
-    to_acc_id = Column("to_acc_id", Integer, ForeignKey(User.id))
+    from_acc_id = Column("from_acc_id", String, ForeignKey(User.id))
+    to_acc_id = Column("to_acc_id", String, ForeignKey(User.id))
 
     amount = Column("amount", Float)
     chat_id = Column("chat_id", Integer, ForeignKey(Chat.id))
@@ -69,7 +68,7 @@ def as_dict(model, columns=None):
 if __name__ == '__main__':
     from sqlalchemy import create_engine
     from sqlalchemy import *
-    sa_engine = create_engine("postgres://localhost:5432/ym")
+    sa_engine = create_engine("postgres://hackaym@localhost:5432/ym")
 
     Base.metadata.create_all(sa_engine)
 

@@ -1,3 +1,4 @@
+# coding=utf-8
 from telebot import types
 
 from src.model.service import ModelService
@@ -9,9 +10,14 @@ service = ModelService(session)
 
 
 def render_balance(balance_dict):
-    return {
-        "text": "\n".join(["{}: {}".format(x,y) for x,y in balance_dict.items()])
-    }
+    if len(balance_dict) > 0:
+        return {
+            "text": "\n".join(["{}: {} руб.".format(x, y) for x, y in balance_dict.items()])
+        }
+    else:
+        return {
+            "text": "Падение рыка недвижимости вам не страшно"
+        }
 
 
 def render_buttons(text, buttons_list):
