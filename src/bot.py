@@ -22,7 +22,7 @@ telebot.logger.setLevel(logging.INFO)
 logger = telebot.logger
 logging.basicConfig(level=logging.INFO)
 
-service = ModelService(sessionmaker(bind=create_engine("postgres://localhost:5432/ym"))())
+service = ModelService(sessionmaker(bind=create_engine("postgres://localhost:5432"))())
 
 def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
