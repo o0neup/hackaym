@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import re
 import logging
 import traceback
@@ -5,6 +7,7 @@ import traceback
 import telebot
 from telebot import types
 
+from messages import r, DESCRIPTIONS
 from src.core import session
 from src.model.service import ModelService
 
@@ -47,15 +50,15 @@ def parse_amount(text):
 command_dict = {
     "bill": [
         {
-            "text": "for whom?",
+            "text": u"За кого вы платили?",
             "parser": parse_username,
-            "fallback_message": "Must be a username"
+            "fallback_message": "На имя пользователя не похоже, а должно. Введите правильное имя :)"
         }, {
-            "text": "amount",
+            "text": "Сколько было заплачено?",
             "parser": parse_amount,
-            "fallback_message": "Must be a float value"
+            "fallback_message": "Не похоже, чтобы это были арабские цифры. Введите правильно, это не так трудно :)"
         }, {
-            "text": "describe it"
+            "text": r(DESCRIPTIONS)
         }
     ]
 }
@@ -163,8 +166,10 @@ def handle_message(message):
                                  "text"]), reply_markup=types.ForceReply(selective=True))
             else:
                 logger.info("Question sequence is over")
-                bot.send_message(message.chat.id, "@{}, question sequence is over, answers are: {}".format(
-                    username, messages[1:]))
+                bot.send_message(
+                    message.chat.id,
+                    "@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
+                    username, messages[2], messages[3], messages[1]))
                 service.create_transaction(username, messages[1][1:], message.chat.id,
                                            amount=int(messages[2]), description=messages[3])
 
