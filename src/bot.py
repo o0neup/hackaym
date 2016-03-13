@@ -27,6 +27,7 @@ telebot.logger.setLevel(logging.INFO)
 logger = telebot.logger
 logging.basicConfig(level=logging.INFO)
 
+
 def parse_username(text):
     logger.info("Parse username in '{}'".format(text))
     if re.search("@\w+", text):
@@ -73,11 +74,13 @@ def handle_bill(message):
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
 
+
 @bot.message_handler(commands=['info'])
 def handle_info(message):
     user_states[message.from_user.id] = rootInfoState
 
     handle_state(message)
+
 
 @bot.message_handler(func=lambda message: True)
 def handle_state(message):

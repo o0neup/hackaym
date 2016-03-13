@@ -1,4 +1,7 @@
-class Node:
+# coding: utf-8
+
+
+class Node(object):
     def __init__(self, msgfunc=None, keyfunc=None, edges=None):
         self.msgfunc = msgfunc
         self.keyfunc = keyfunc
