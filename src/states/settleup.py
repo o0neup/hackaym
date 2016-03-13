@@ -15,7 +15,7 @@ session = Session()
 service = ModelService(session)
 
 def render_buttons(text, buttons_list):
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, selective=True)
     for btn in buttons_list:
         markup.add(str(btn))
     return {
@@ -28,7 +28,8 @@ def render_suggest_buttons(message, chat_id):
     buttons = ["{} -> {}: {} руб.".format(*x) for x in settleup_scheme]
     buttons.append("Другой вариант")
 
-    return render_buttons("Мы предлагаем следующие варианты погашения долгов", buttons)
+    return render_buttons("@{} Мы предлагаем следующие варианты погашения долгов"
+                          .format(message.from_user.username), buttons)
 
 def shortSettle(message, chat_id):
     match = re.match("(.*) -> (.*): (.*) руб.", message.text.encode("utf-8"))
@@ -42,8 +43,8 @@ def shortSettle(message, chat_id):
     }
 
 def longSettle(message):
-    from_user_id = message.from_user.id
-    to_user_id = int(chooseRecipientState.storage[from_user_id].text)
+    from_user_id = message.from_user.username
+    to_user_id = chooseRecipientState.storage[from_user_id].text
     amount = int(chooseAmountState.storage[from_user_id].text)
     service.create_transaction(from_user_id, to_user_id, message.chat.id, -amount, description="Ручной settle up")
 
@@ -52,11 +53,11 @@ def longSettle(message):
     }
 
 def longSettle2(message):
-    from_user_id = message.from_user.id
+    from_user_id = message.from_user.username
     to_user_id = int(chooseRecipientState.storage[from_user_id].text)
     amount = int(chooseAmountState.storage[from_user_id].text)
     service.create_transaction(from_user_id, to_user_id,
-                               service.chat_id(privateSettleupState.storage[message.from_user.id].text),
+                               service.chat_id(privateSettleupState.storage[message.from_user.username].text),
                                -amount, description="Ручной settle up")
 
     return {
@@ -71,7 +72,7 @@ firstDoneState = Node(
 )
 
 firstDoneState2 = Node(
-    msgfunc=lambda x: shortSettle(x, service.chat_id(privateSettleupState.storage[x.from_user.id].text))
+    msgfunc=lambda x: shortSettle(x, service.chat_id(privateSettleupState.storage[x.from_user.username].text))
 )
 
 secondDoneState = Node(
@@ -83,33 +84,33 @@ secondDoneState2 = Node(
 )
 
 chooseAmountState = Node(
-    msgfunc=lambda x: {"text":"Введите сумму", "reply_markup": types.ForceReply()},
+    msgfunc=lambda x: {"text":"@{} Введите сумму".format(x.from_user.username), "reply_markup": types.ForceReply(selective=True)},
     keyfunc=lambda x: True,
     edges={True: secondDoneState}
 )
 
 chooseAmountState2 = Node(
-    msgfunc=lambda x: {"text":"Введите сумму", "reply_markup": types.ForceReply()},
+    msgfunc=lambda x: {"text":"@{} Введите сумму".format(x.from_user.username), "reply_markup": types.ForceReply(selective=True)},
     keyfunc=lambda x: True,
     edges={True: secondDoneState2}
 )
 
 chooseRecipientState = Node(
-    msgfunc=lambda x: render_buttons("Кому вы хотите отдать деньги?", candidates(chat_id=x.chat.id, user_id=x.from_user.id)),
+    msgfunc=lambda x: render_buttons("@{} Кому вы хотите отдать деньги?".format(x.from_user.username), candidates(chat_id=x.chat.id, user_id=x.from_user.id)),
     keyfunc=lambda x: True,
     edges={True: chooseAmountState}
 )
 
 chooseRecipientState2 = Node(
-    msgfunc=lambda x: render_buttons("Кому вы хотите отдать деньги?",
-                                     candidates(chart_name=privateSettleupState.storage[x.from_user.id].text,
-                                                user_id=x.from_user.id)),
+    msgfunc=lambda x: render_buttons("@{} Кому вы хотите отдать деньги?".format(x.from_user.username),
+                                     candidates(chart_name=privateSettleupState.storage[x.from_user.username].text,
+                                                user_id=x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: chooseAmountState2}
 )
 
 suggestedNochatState = Node(
-    msgfunc=lambda x:render_suggest_buttons(x, service.chat_id(privateSettleupState.storage[x.from_user.id].text)),
+    msgfunc=lambda x:render_suggest_buttons(x, service.chat_id(privateSettleupState.storage[x.from_user.username].text)),
     keyfunc=lambda x: x.text == "Другой вариант".decode("utf-8"),
     edges={
         True: chooseRecipientState2,
@@ -118,7 +119,7 @@ suggestedNochatState = Node(
 )
 
 privateSettleupState = Node(
-    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.id)),
+    msgfunc=lambda x: render_buttons("@{} Выберите чат".format(x.from_user.username), service.user_chat_names(x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: suggestedNochatState}
 )

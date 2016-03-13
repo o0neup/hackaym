@@ -24,7 +24,7 @@ def render_suggest(suggest_list):
         }
 
 def render_buttons(text, buttons_list):
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, selective=True)
     for btn in buttons_list:
         markup.add(btn)
     return {
@@ -37,7 +37,7 @@ privateSuggestState2 = Node(
 )
 
 privateSuggestState = Node(
-    msgfunc=lambda x: render_buttons("Choose chat", service.user_chat_names(x.from_user.id)),
+    msgfunc=lambda x: render_buttons("@{} Choose chat".format(x.from_user.username), service.user_chat_names(x.from_user.username)),
     keyfunc=lambda x: True,
     edges={True: privateSuggestState2}
 )
