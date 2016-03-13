@@ -36,7 +36,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 def parse_single_username(message):
-    logger.info("Parse single username in '{}'".format(message.text))
     username = None
     if message.text.strip().lower() == "я".decode("utf8"):
         username = message.from_user.username
@@ -44,7 +43,6 @@ def parse_single_username(message):
         result = re.findall("@\w+", message.text)
         if len(result) == 1:
             username = result[0]
-
     return username
 
 
@@ -60,16 +58,14 @@ def get_auth_url(user_id, code_redirect_uri=REDIRECT_TO):
 
 def parse_username(message):
     text = message.text
-    logger.info("Parse username in '{}'".format(text))
     result = re.findall("@\w+", text)
     if len(result) > 0:
-        return result
+        return map(lambda x: x.strip('a'), result)
     return None
 
 
 def parse_amount(message):
     text = message.text
-    logger.info("Parse amount in '{}'".format(text))
     try:
         return float(text)
     except ValueError:
@@ -236,14 +232,14 @@ def handle_message(message):
                 total_amount = int(messages[3])
                 payer = messages[1]
                 for_users = messages[2]
-                description = messages[3]
+                description = messages[4]
                 for user in for_users:
                     user_amount = int(total_amount / len(for_users))
-                    service.create_transaction(payer, user, message.chat.id,
-                                               amount=user_amount, description=description)
+                    # service.create_transaction(payer, user, message.chat.id,
+                    #                            amount=user_amount, description=description)
                     bot.send_message(
                         message.chat.id,
-                        "@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
+                        u"@{}, уже готово. Детали счёта: вы потратили {}руб на {}, заплатив за @{}".format(
                             payer, user_amount, description, user))
 
         if "parser" in question:
