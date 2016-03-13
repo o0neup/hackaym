@@ -18,15 +18,13 @@ APP_NAME = "ymhacka"
 REDIRECT_TO = "oauth_code"
 
 TELEGRAM = {
-    "token": "185093347:AAHbhPcP3xPj7kiL3vpBUxM1lcxqmQR9WH8",
+    "token": "171350837:AAHZCrB8sr8naeAo_2G4761PTqwvx22cBZg",
     "api_uri": "https://api.telegram.org/bot{}/{}",
     "callback_uri": "https://mrxmoscow.com/aaa"
 }
 
 
 YM_SCOPE = ["account-info", "operation-details", "payment-p2p"]
-
-
 try:
     from settings_local import *
 except ImportError:
