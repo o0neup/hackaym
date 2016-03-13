@@ -78,6 +78,10 @@ class ModelService(object):
         self.session.add(transaction)
         self.session.commit()
 
+    def get_known_users(self):
+        users = self.session.query(User).all()
+        return [u.id for u in users]
+
     def user_chat_names(self, username):
         self._ensure_user(username)
         chats = self.session.query(Transaction, Chat)\
@@ -85,7 +89,6 @@ class ModelService(object):
             .filter(or_(Transaction.from_acc_id == username, Transaction.to_acc_id == username)).distinct(Chat.name).all()
 
         return [chat[1].name for chat in chats]
-
 
     def list_transactions(self, username=None, chat_id=None, limit=10):
         if username is None and chat_id is None:

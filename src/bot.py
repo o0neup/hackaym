@@ -1,15 +1,17 @@
-import logging
-
 import re
+import logging
+import traceback
+
 import telebot
 from telebot import types
+
+from src.core import session
 from src.model.service import ModelService
+
 from src.states.info import rootInfoState
 from src.states.suggest import rootSuggestState
 from src.states.settleup import rootSettleupState
-import traceback
-
-from src.core import session
+from src.states.money import render_invitation
 
 
 service = ModelService(session)
@@ -70,6 +72,8 @@ def handle_command(message):
     write_to_storage(message.from_user.id, message.chat.id, message.text)
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
+    bot.send_message(message.chat.id,
+                     render_invitation(service.user_chat_names(message.from_user.id)))
 
 
 @bot.message_handler(commands=['info'])
@@ -77,10 +81,12 @@ def handle_info(message):
     user_states[message.from_user.id] = rootInfoState
     handle_state(message)
 
+
 @bot.message_handler(commands=['suggest'])
 def handle_info(message):
     user_states[message.from_user.id] = rootSuggestState
     handle_state(message)
+
 
 @bot.message_handler(commands=['settleup'])
 def handle_info(message):
