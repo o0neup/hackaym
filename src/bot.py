@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.INFO)
 def parse_single_username(message):
     logger.info("Parse single username in '{}'".format(message.text))
     username = None
-    if message.text.strip() == "я":
+    if message.text.strip().lower() == "я".decode("utf8"):
         username = message.from_user.username
     else:
         result = re.findall("@\w+", message.text)
