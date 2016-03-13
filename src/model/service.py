@@ -37,10 +37,10 @@ class ModelService(object):
         self.session.add(user)
         self.session.commit()
 
-    def add_wallet(self, uid, auth_token=None, account_id=None):
-        self._ensure_user(uid)
+    def add_wallet(self, username, auth_token=None, account_id=None):
+        self._ensure_user(username)
 
-        user = self.session.query(User).filter(User.id == uid).one()
+        user = self.session.query(User).filter(User.id == username).one()
 
         if user.auth_token is not None or user.account_id is not None:
             logger.warning("User already has valid wallet. Overriding")
@@ -61,36 +61,36 @@ class ModelService(object):
         self.session.add(chat)
         self.session.commit()
 
-    def create_transaction(self, from_uid, to_uid, chat_id, amount, date=None, description=None):
-        self._ensure_user(from_uid)
-        self._ensure_user(to_uid)
+    def create_transaction(self, from_username, to_username, chat_id, amount, date=None, description=None):
+        self._ensure_user(from_username)
+        self._ensure_user(to_username)
         self._ensure_chat(chat_id)
 
         if date is None:
             date = datetime.datetime.now()
 
-        transaction = Transaction(from_acc_id=from_uid, to_acc_id=to_uid, chat_id=chat_id,
+        transaction = Transaction(from_acc_id=from_username, to_acc_id=to_username, chat_id=chat_id,
                                   amount=amount, date=date, description=description)
         self.session.add(transaction)
         self.session.commit()
 
-    def user_chat_names(self, uid):
-        self._ensure_user(uid)
+    def user_chat_names(self, username):
+        self._ensure_user(username)
         chats = self.session.query(Transaction, Chat)\
             .filter(Transaction.chat_id == Chat.id)\
-            .filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid)).distinct(Chat.name).all()
+            .filter(or_(Transaction.from_acc_id == username, Transaction.to_acc_id == username)).distinct(Chat.name).all()
 
         return [chat[1].name for chat in chats]
 
 
-    def list_transactions(self, uid=None, chat_id=None, limit=10):
-        if uid is None and chat_id is None:
-            raise ValueError("At least one of the following should not be null: uid, chat_id")
+    def list_transactions(self, username=None, chat_id=None, limit=10):
+        if username is None and chat_id is None:
+            raise ValueError("At least one of the following should not be null: username, chat_id")
 
         query = self.session.query(Transaction, Chat).filter(Transaction.chat_id == Chat.id).order_by(Transaction.date.desc())
 
-        if uid is not None:
-            query = query.filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid))
+        if username is not None:
+            query = query.filter(or_(Transaction.from_acc_id == username, Transaction.to_acc_id == username))
 
         if chat_id is not None:
             query = query.filter(Transaction.chat_id == chat_id)
@@ -98,27 +98,27 @@ class ModelService(object):
         result = query.limit(limit).all()
         return [as_dict(x, columns=["name", "description", "date", "from_acc_id", "to_acc_id"]) for x in result]
 
-    def total_balance(self, uid=None, chat_id=None, chat_name=None):
-        if uid is None and chat_id is None and chat_name is None:
-            raise ValueError("At least one of the following should not be null: uid, chat_id")
+    def total_balance(self, username=None, chat_id=None, chat_name=None):
+        if username is None and chat_id is None and chat_name is None:
+            raise ValueError("At least one of the following should not be null: username, chat_id")
 
         if chat_name is not None:
             chat_id = self.session.query(Chat).filter(Chat.name == chat_name).one().id
 
         query = self.session.query(Transaction)
 
-        if uid is not None:
-            query = query.filter(or_(Transaction.from_acc_id == uid, Transaction.to_acc_id == uid))
+        if username is not None:
+            query = query.filter(or_(Transaction.from_acc_id == username, Transaction.to_acc_id == username))
 
         if chat_id is not None:
             query = query.filter(Transaction.chat_id == chat_id)
 
         accountable_transactions = query.all()
-        if uid is None:
+        if username is None:
             users = set([x.from_acc_id for x in accountable_transactions])\
                     | set([x.to_acc_id for x in accountable_transactions])
         else:
-            users = {uid}
+            users = {username}
 
         balances = defaultdict(int)
         for transaction in accountable_transactions:
