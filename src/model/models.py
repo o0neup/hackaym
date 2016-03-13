@@ -18,6 +18,8 @@ class User(Base):
     auth_token = Column("auth_token", String)
     account_id = Column("account_id", String)
 
+    chat_id = Column("chat_id", Integer, ForeignKey("hackaym.chat.id"))
+
 
 class Chat(Base):
     __tablename__ = 'chat'

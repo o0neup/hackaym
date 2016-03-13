@@ -11,6 +11,7 @@ from src.model.service import ModelService
 from src.states.info import rootInfoState
 from src.states.suggest import rootSuggestState
 from src.states.settleup import rootSettleupState
+from src.states.history import rootHistoryState
 from src.states.money import render_invitation
 
 
@@ -78,7 +79,7 @@ def handle_command(message):
     bot.send_message(message.chat.id, "@{}, {}".format(message.from_user.username, command_dict[
                      message.text.strip('/')][0]["text"]), reply_markup=types.ForceReply(selective=True))
     bot.send_message(message.chat.id,
-                     render_invitation(service.user_chat_names(message.from_user.id)))
+                     render_invitation(service.user_chat_names(message.from_user.username)))
 
 
 @bot.message_handler(commands=['info'])
@@ -96,6 +97,11 @@ def handle_info(message):
 @bot.message_handler(commands=['settleup'])
 def handle_info(message):
     user_states[message.from_user.username] = rootSettleupState
+    handle_state(message)
+
+@bot.message_handler(commands=['history'])
+def handle_info(message):
+    user_states[message.from_user.username] = rootHistoryState
     handle_state(message)
 
 @bot.message_handler(func=lambda message: message.from_user.username is not None)
@@ -119,12 +125,15 @@ def handle_state(message):
 def handle_message(message):
     logger.info(message)
     username = message.from_user.username
-    service._ensure_user(username)
 
     if message.chat.title is not None:
         service._ensure_chat(message.chat.id, message.chat.title)
+        service._ensure_user(username)
     else:
         service._ensure_chat(message.chat.id, message.chat.username)
+        service._ensure_user(username, message.chat.id)
+
+
 
     logger.info("User id: '{}', username: '{}'".format(
         message.from_user.id, username))

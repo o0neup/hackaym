@@ -20,11 +20,11 @@ class ModelService(object):
     def __init__(self, session):
         self.session = session
 
-    def _ensure_user(self, username):
+    def _ensure_user(self, username, chat_id=None):
         try:
             self.session.query(User).filter(User.id == username).one()
         except NoResultFound:
-            self.create_user(username)
+            self.create_user(username, chat_id=chat_id)
 
     def _ensure_chat(self, chat_id, chat_name=None):
         try:
@@ -36,10 +36,14 @@ class ModelService(object):
         chat = self.session.query(Chat).filter(Chat.name == chat_name).one()
         return chat.id
 
-    def create_user(self, username, auth_token=None, account_id=None):
-        user = User(id=username, auth_token=auth_token, account_id=account_id)
+    def create_user(self, username, auth_token=None, account_id=None, chat_id=None):
+        user = User(id=username, auth_token=auth_token, account_id=account_id, chat_id=chat_id)
         self.session.add(user)
         self.session.commit()
+
+    def user_chat(self, username):
+        user = self.session.query(User).filter(User.id == username).one()
+        return user.chat_id
 
     def add_wallet(self, username, auth_token=None, account_id=None):
         self._ensure_user(username)
@@ -53,6 +57,10 @@ class ModelService(object):
         user.account_id = account_id
         self.session.add(user)
         self.session.commit()
+
+    def has_wallet(self, uid):
+        user = self.session.query(User).filter(User.id == uid).one()
+        return user.auth_token is not None and user.account_id is not None
 
     def create_chat(self, chat_id, name=None):
         chat = Chat(id=chat_id, name=name)

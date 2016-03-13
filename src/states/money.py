@@ -19,9 +19,9 @@ def render_invitation(users):
     known_users = set(service.get_known_users())
     _users = ', '.join(["@{}".format(u) for u in users if u not in known_users])
     return {
-        "text": ("К сожалению, у {} не создан чат со мной, и мы не можем воспользоваться "
+        "text": "К сожалению, у {} не создан чат со мной, и мы не можем воспользоваться "
                  "клёвым функционалом Яндекс.Денег :( Создайте, пожалуйста, приватные чаты "
-                 "со мной").format(_users)
+                 "со мной".format(_users)
     }
 
 
