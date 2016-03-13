@@ -47,8 +47,8 @@ def oauth_confirm():
 
     service = ModelService(session)
     try:
-        service.create_user(username=user_id, auth_token=token['access_token'],
-                            account_id=int(account_info["account"]))
+        service.add_wallet(username=user_id, auth_token=token['access_token'],
+                           account_id=int(account_info["account"]))
     except IntegrityError:
         return redirect("{}/auth_confirmed?user_id={}".format(BASE_URL, user_id))
     except Exception as e:  # TODO handle exceptions with invalid user_id!

@@ -9,7 +9,9 @@ from telebot import types
 
 from messages import r, DESCRIPTIONS
 from src.core import session
+from src.model.models import User
 from src.model.service import ModelService
+from src.handlers.ymauth import get_auth_url
 
 from src.states.info import rootInfoState
 from src.states.suggest import rootSuggestState
@@ -95,6 +97,40 @@ def handle_info(message):
     handle_state(message)
 
 
+@bot.message_handler(commands=['add_yandex_money'])
+def handle_info(message):
+    try:
+        user = service.session.query(User).filter(User.id == message.chat.username).one()
+    except:
+        logger.exception(traceback.print_exc())
+        # todo handle exc
+        user = None
+
+    if message.chat.id > 0:
+        service._ensure_user(username=message.chat.username, chat_id=message.chat.id)
+        if user and user.account_id:
+            text = "Вы уже прикрепили кошелек."
+        else:
+            text = "Ваш URL для авторизации в Яндекс.Деньгах: {}".format(
+                get_auth_url(user_id=message.chat.username)
+            )
+    else:
+        # todo handle users without chat instance
+        chat = service.user_chat(message.chat.username)
+        if chat is None:
+            text = ("Прикрепить кошелек можно только в личном чате со мной. "
+                    "@{}, создайте, пожалуйста, приватный чат со мной и повторите эту команду").format(
+                message.chat.username
+            )
+        else:
+            bot.send_message(chat_id=chat, text="Ваш URL для авторизации в Яндекс.Деньгах: {}".format(
+                    get_auth_url(user_id=message.chat.username)
+                ))
+            text = "@{}, Вам было отправлено приватное сообщение".format(message.chat.username)
+    bot.send_message(chat_id=message.chat.id,
+                     text=text)
+
+
 @bot.message_handler(commands=['suggest'])
 def handle_info(message):
     user_states[message.from_user.username] = rootSuggestState
@@ -139,8 +175,6 @@ def handle_message(message):
         service._ensure_chat(message.chat.id, message.chat.username)
         service._ensure_user(username, message.chat.id)
         service.update_user(username, message.chat.id)
-
-
 
     logger.info("User id: '{}', username: '{}'".format(
         message.from_user.id, username))
