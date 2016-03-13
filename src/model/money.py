@@ -46,7 +46,7 @@ class MoneyService(object):
         "amount_due": None,
         "comment": None,  # Is useful - payment description
         "message": None,  # Is useful - payment description
-        "label": None,  # todo could be useful
+        "label": None,
         "codepro": False,
     }
 

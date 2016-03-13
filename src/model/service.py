@@ -128,7 +128,7 @@ class ModelService(object):
         # user_object = self.session.query(User).filter(User.id.in_(users)).all()
         # names = {u.id: u.name}
 
-        return {key: val for key, val in balances.iteritems() if key in users }
+        return {key: val for key, val in balances.iteritems() if key in users}
 
 
 if __name__ == '__main__':
